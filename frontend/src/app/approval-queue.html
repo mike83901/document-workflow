@@ -1,0 +1,320 @@
+<div class="app-shell">
+  <aside class="sidebar">
+    <a class="brand" href="/" aria-label="Example.com home">
+      <span class="brand-mark">e.</span>
+      <span class="brand-name">example<span>.com</span></span>
+    </a>
+
+    <div class="workspace-label">WORKSPACE</div>
+    <nav aria-label="เมนูหลัก">
+      <a class="nav-link active" href="/" aria-current="page">
+        <span class="nav-glyph">▤</span>
+        <span>กล่องงานอนุมัติ</span>
+        <span class="nav-count">{{ pendingCount() }}</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-note">
+      <span class="note-indicator"></span>
+      <div><strong>ระบบพร้อมใช้งาน</strong><small>ข้อมูลอัปเดตล่าสุด</small></div>
+    </div>
+
+    <div class="profile">
+      <div class="profile-avatar">PC</div>
+      <div class="profile-copy">
+        <strong>พิมพ์ชนก แสงทอง</strong><small>ผู้อนุมัติเอกสาร</small>
+      </div>
+      <span class="profile-menu" aria-hidden="true">···</span>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <div class="breadcrumbs">
+        <span>ศูนย์เอกสาร</span><span class="crumb-divider">/</span><strong>กล่องงานอนุมัติ</strong>
+      </div>
+      <div class="topbar-meta">
+        <span class="today-label">DOCUMENT CONTROL</span><span class="topbar-avatar">PC</span>
+      </div>
+    </header>
+
+    <section class="page-intro">
+      <div>
+        <div class="eyebrow"><span class="eyebrow-line"></span> DOCUMENT WORKFLOW</div>
+        <h1>เอกสารอนุมัติ</h1>
+        <p>ตรวจสอบและจัดการคำขอที่ส่งเข้ามาในระบบ</p>
+      </div>
+      <button class="refresh-button" type="button" (click)="loadDocuments()" [disabled]="loading()">
+        <span class="refresh-icon" aria-hidden="true">↻</span> รีเฟรชรายการ
+      </button>
+    </section>
+
+    <section class="summary-strip" aria-label="สรุปเอกสาร">
+      <div class="summary-item">
+        <span class="summary-label">เอกสารทั้งหมด</span
+        ><strong>{{ documents().length.toString().padStart(2, '0') }}</strong>
+      </div>
+      <div class="summary-item pending-summary">
+        <span class="summary-label">รอการพิจารณา</span
+        ><strong>{{ pendingCount().toString().padStart(2, '0') }}</strong>
+      </div>
+      <div class="summary-item approved-summary">
+        <span class="summary-label">อนุมัติแล้ว</span
+        ><strong>{{ approvedCount().toString().padStart(2, '0') }}</strong>
+      </div>
+      <div class="summary-item rejected-summary">
+        <span class="summary-label">ไม่อนุมัติ</span
+        ><strong>{{ rejectedCount().toString().padStart(2, '0') }}</strong>
+      </div>
+      <div class="summary-footnote"><span class="live-dot"></span> MOCK WORKSPACE</div>
+    </section>
+
+    @if (notice()) {
+      <div class="notice-banner" role="status"><span>✓</span>{{ notice() }}</div>
+    }
+    @if (error() && !modalAction()) {
+      <div class="error-banner" role="alert">
+        {{ error() }} <button type="button" (click)="loadDocuments()">ลองอีกครั้ง</button>
+      </div>
+    }
+
+    <section class="queue-section" aria-labelledby="queue-title">
+      <div class="queue-heading">
+        <div>
+          <div class="section-kicker">INCOMING DOCUMENTS</div>
+          <h2 id="queue-title">รายการเอกสาร</h2>
+        </div>
+        <label class="search-box">
+          <span aria-hidden="true">⌕</span>
+          <input
+            type="search"
+            placeholder="ค้นหาเอกสาร..."
+            aria-label="ค้นหาเอกสาร"
+            [ngModel]="search()"
+            (ngModelChange)="search.set($event)"
+          />
+          <kbd>⌘ K</kbd>
+        </label>
+      </div>
+
+      <div class="queue-toolbar">
+        <div class="filter-tabs" role="tablist" aria-label="กรองตามสถานะ">
+          <button
+            type="button"
+            role="tab"
+            [attr.aria-selected]="filter() === 'All'"
+            [class.active]="filter() === 'All'"
+            (click)="setFilter('All')"
+          >
+            ทั้งหมด <span>{{ documents().length }}</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            [attr.aria-selected]="filter() === 'Pending'"
+            [class.active]="filter() === 'Pending'"
+            (click)="setFilter('Pending')"
+          >
+            รออนุมัติ <span>{{ pendingCount() }}</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            [attr.aria-selected]="filter() === 'Approved'"
+            [class.active]="filter() === 'Approved'"
+            (click)="setFilter('Approved')"
+          >
+            อนุมัติแล้ว
+          </button>
+          <button
+            type="button"
+            role="tab"
+            [attr.aria-selected]="filter() === 'Rejected'"
+            [class.active]="filter() === 'Rejected'"
+            (click)="setFilter('Rejected')"
+          >
+            ไม่อนุมัติ
+          </button>
+        </div>
+        <div class="decision-actions">
+          @if (selectedDocument()) {
+            <span class="selection-copy">เลือกแล้ว 1 รายการ</span>
+          } @else {
+            <span class="selection-copy">เลือกรายการเพื่อดำเนินการ</span>
+          }
+          <button
+            class="action-button reject-button"
+            type="button"
+            [disabled]="!selectedDocument()"
+            (click)="openDecision('Rejected')"
+          >
+            ไม่อนุมัติ
+          </button>
+          <button
+            class="action-button approve-button"
+            type="button"
+            [disabled]="!selectedDocument()"
+            (click)="openDecision('Approved')"
+          >
+            <span aria-hidden="true">✓</span> อนุมัติ
+          </button>
+        </div>
+      </div>
+
+      <div class="table-frame">
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th class="select-column"><span class="sr-only">เลือก</span></th>
+                <th>เลขที่ / ชื่อเอกสาร</th>
+                <th>หมวดหมู่</th>
+                <th>ผู้ส่งเอกสาร</th>
+                <th>วันที่ส่ง</th>
+                <th>สถานะ</th>
+                <th>เหตุผล</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (document of visibleDocuments(); track document.id) {
+                <tr [class.row-selected]="selectedId() === document.id">
+                  <td class="select-column">
+                    <input
+                      class="row-checkbox"
+                      type="checkbox"
+                      [attr.aria-label]="'เลือก ' + document.documentNumber"
+                      [checked]="selectedId() === document.id"
+                      [disabled]="document.status !== 'Pending'"
+                      (change)="toggleSelection(document, $event)"
+                    />
+                  </td>
+                  <td>
+                    <div class="document-cell">
+                      <span
+                        class="document-icon"
+                        [class.icon-finance]="document.category === 'การเงิน'"
+                        [class.icon-people]="document.category === 'บุคคล'"
+                        [class.icon-purchase]="document.category === 'จัดซื้อ'"
+                        [class.icon-tech]="document.category === 'เทคโนโลยี'"
+                        [class.icon-marketing]="document.category === 'การตลาด'"
+                        >▧</span
+                      >
+                      <div>
+                        <strong>{{ document.title }}</strong
+                        ><small>{{ document.documentNumber }}</small>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="category-label">{{ document.category }}</span>
+                  </td>
+                  <td>
+                    <span class="submitter-name">{{ document.submittedBy }}</span>
+                  </td>
+                  <td class="date-cell">{{ document.submittedAt | date: 'dd MMM yyyy' }}</td>
+                  <td>
+                    <span
+                      class="status-badge"
+                      [class.status-pending]="document.status === 'Pending'"
+                      [class.status-approved]="document.status === 'Approved'"
+                      [class.status-rejected]="document.status === 'Rejected'"
+                      ><span class="status-dot"></span>{{ statusLabel(document.status) }}</span
+                    >
+                  </td>
+                  <td class="reason-cell">{{ document.decisionReason || '—' }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td class="empty-cell" colspan="7">
+                    {{ loading() ? 'กำลังโหลดรายการเอกสาร...' : 'ไม่พบเอกสารที่ตรงกับเงื่อนไข' }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <footer class="table-footer">
+          <span>แสดง {{ visibleDocuments().length }} จาก {{ documents().length }} รายการ</span
+          ><span class="footer-note">อัปเดตเมื่อ {{ loadedAt | date: 'HH:mm' }}</span>
+        </footer>
+      </div>
+    </section>
+
+    <footer class="page-footer">
+      <span>EXAMPLE.COM <span class="footer-separator">/</span> DOCUMENT CONTROL</span
+      ><span>INTERNAL WORKSPACE</span>
+    </footer>
+  </main>
+</div>
+
+@if (modalAction(); as action) {
+  <div class="modal-backdrop" (click)="onBackdropClick($event)" (keydown.escape)="closeModal()">
+    <section class="decision-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-topline" [class.modal-reject-topline]="action === 'Rejected'"></div>
+      <div class="modal-header">
+        <div class="modal-symbol" [class.modal-reject-symbol]="action === 'Rejected'">
+          {{ action === 'Approved' ? '✓' : '!' }}
+        </div>
+        <button class="modal-close" type="button" aria-label="ปิดหน้าต่าง" (click)="closeModal()">
+          ×
+        </button>
+      </div>
+      <div class="modal-copy">
+        <div class="section-kicker">DOCUMENT DECISION</div>
+        <h2 id="modal-title">
+          {{ action === 'Approved' ? 'ยืนยันการอนุมัติ' : 'ยืนยันการไม่อนุมัติ' }}
+        </h2>
+        <p>
+          {{
+            action === 'Approved'
+              ? 'โปรดระบุเหตุผลประกอบการอนุมัติเอกสารนี้'
+              : 'โปรดระบุเหตุผลประกอบการไม่อนุมัติเอกสารนี้'
+          }}
+        </p>
+      </div>
+      @if (selectedDocument(); as document) {
+        <div class="modal-document">
+          <span>{{ document.documentNumber }}</span
+          ><strong>{{ document.title }}</strong>
+        </div>
+      }
+      <label class="reason-label" for="decision-reason">เหตุผล <span>จำเป็น</span></label>
+      <textarea
+        id="decision-reason"
+        rows="4"
+        maxlength="500"
+        [ngModel]="reason()"
+        (ngModelChange)="reason.set($event)"
+        [placeholder]="
+          action === 'Approved' ? 'ระบุเหตุผลการอนุมัติ...' : 'ระบุเหตุผลการไม่อนุมัติ...'
+        "
+        autofocus
+      ></textarea>
+      <div class="character-count">{{ reason().length }} / 500</div>
+      @if (error()) {
+        <div class="modal-error" role="alert">{{ error() }}</div>
+      }
+      <div class="modal-actions">
+        <button class="cancel-button" type="button" [disabled]="saving()" (click)="closeModal()">
+          ยกเลิก
+        </button>
+        <button
+          class="action-button"
+          [class.approve-button]="action === 'Approved'"
+          [class.reject-button]="action === 'Rejected'"
+          type="button"
+          [disabled]="!reason().trim() || saving()"
+          (click)="confirmDecision()"
+        >
+          {{
+            saving()
+              ? 'กำลังบันทึก...'
+              : action === 'Approved'
+                ? 'ยืนยันอนุมัติ'
+                : 'ยืนยันไม่อนุมัติ'
+          }}
+        </button>
+      </div>
+    </section>
+  </div>
+}

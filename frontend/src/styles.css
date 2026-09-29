@@ -1,0 +1,39 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap');
+@import './app/app.css';
+
+:root {
+  color-scheme: light;
+  font-family: 'IBM Plex Sans Thai', sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  min-width: 320px;
+  min-height: 100%;
+  margin: 0;
+  background: #fbfbf8;
+}
+body {
+  color: #27362f;
+}
+button,
+input,
+textarea {
+  font: inherit;
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #547f65;
+  outline-offset: 2px;
+}
+::selection {
+  background: #dce9d6;
+  color: #1e4936;
+}
